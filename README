@@ -1,94 +1,90 @@
-Nombre del proyecto: SGIR
+Esta es la versión final y optimizada del documento técnico para el proyecto SGIR. He integrado la arquitectura basada en patrones de diseño y estructurado los tres pilares de la API (/monitoring, /backup, /assets) para que sea escalable y profesional.
+SGIR: Sistema de Gestión de Infraestructura y Recursos
 
-Backend con Python UV & fastapi
-Nota: Previamente se contempla info de servidores a los que se conectara almacenada en 
-una bd en postgreSQL. Se conectara a servers legacy y no legacy, igual cada server tendra una
-categoria de normal, importante y/critico (mejorar estas descripciones)
+SGIR es una plataforma de backend diseñada para la administración centralizada de infraestructura heterogénea. El sistema permite supervisar y gestionar servidores tanto Legacy como modernos, garantizando la integridad de los datos y la visibilidad total de los activos sin requerir la instalación de agentes en los nodos remotos.
+Stack Tecnológico Principal
 
-Contiene los siguientes modulos y/o funcionalidades: 
-1. Monitoreo
+    Runtime: Python 3.12+ (Gestionado con UV para una resolución de dependencias ultra rápida).
 
-M. Base: Info del CPU, RAM, DISK. Sin necesidad de instalar algo en el servidor.
-M. Por RDBS():
-Las BD que propone monitorear son:
-  * mysql 5.X a 8.x
-  * Oracle 10g
-  * Oracle 19c
-  * MongoDB
+    Framework: FastAPI (Arquitectura asíncrona y tipado estricto con Pydantic).
 
-Por cada RDBS se quiere monitorear creando un usuario con x permisos:
-  * conexiones activas
-  * queryes atascados
-  * total de base de datos
-  * suma en GB de esas bd
+    Base de Datos: PostgreSQL (Inventario, bitácoras de auditoría y estados de salud).
 
-  El back tendra endpoint especificos para cada rdbsm, por ejemplo:
-  get_connections_mysql5.X_legacy()
-  get_connections_mysql8.X_NOlegacy()
+    Comunicación: SSH (Paramiko/AsyncSSH) y Drivers nativos de BD (SQLAlchemy/Motor).
 
+1. Clasificación de Activos (Matriz de Criticidad)
 
-Aqui se puede guardar el historia el una bitacora que posteriormente sera definida
+Para priorizar las tareas de respaldo y monitoreo, los servidores se categorizan según su impacto en la operación:
 
+    Nivel 1: Estándar (Normal): Entornos de desarrollo, pruebas o herramientas internas no críticas.
 
-2. Backup
-En este modulo accedera de igual forma a servers legacy y no legacy, por medio de ssh. 
-Usara tambien sftp para poder descargar los respaldos:
+    Nivel 2: Productivo (Importante): Servidores que soportan operaciones diarias con usuarios activos. Requieren monitoreo constante.
 
-Nota: Previamente se recomienda normalizar los nombres de todos los respaldos.
-Independientemente de que rdbsm se use, por ejemplo:
+    Nivel 3: Misión Crítica (Crítico): Infraestructura vital (Core). El fallo de estos sistemas implica la detención total de procesos de negocio o pérdida de datos sensibles.
 
-  Rsp_dbname_date_ipserver.sql
-    date=day_month_year
-    ipserver=los ultimos dos bytes, 148.215.1.98 -> 1_98
+2. Arquitectura de la API: Endpoints Principales
 
-  Esto es opcional pero se recomienda que se compriman para ahorrar espacio 
+Para evitar la redundancia de código y facilitar el mantenimiento, el backend implementa un Factory Pattern. En lugar de crear rutas para cada versión de base de datos, el sistema detecta automáticamente la versión y el estado "Legacy" desde el inventario en PostgreSQL para ejecutar el driver adecuado.
+A. Módulo de Monitoreo (/monitoring)
 
+Este endpoint centraliza la salud del hardware y los motores de base de datos de forma no invasiva.
 
+    Infraestructura Base: Obtención de métricas de CPU, RAM y almacenamiento mediante comandos nativos vía SSH.
 
-Revisar si se hicieron los respaldos
-  Se tendran unas rutas previamente definindas tipo: /home/angel/backup
-  Cuando se registre un nuevo server que se quiera monitorear el backup el user especificara la path
-  
-  Se tendra una bitacora que registre que db se tiene backup, fecha, tamanio, y cuantos se tiene, y donde (esto por que se alojan en el server que se hace y se descarga en una carpeta del back)
+    Health Checks de RDBMS: Consultas de diagnóstico para MySQL (5.x/8.x), Oracle (10g/19c) y MongoDB.
 
-Descarga de backups:
-Para mayor redundancia, se pueden descargar los respaldos al server del back:
-  A) Todos, de todos los servers, de todas las bd.
-  B)  Especifcico por RDBS
-    Solo los MYSQL 5
-  C) Especifico por servidor
-  D) Por prioridad
-    Previamente los servers se clasificaran como normal, avanzado o critico. 
+        Métricas Clave: Conexiones activas, detección de hilos bloqueados (stuck queries), número de bases de datos y peso total en GB.
 
-Si se descargan se recomeinda usar rclone para syncronizar con x o y provedor
+    Ruta Sugerida: GET /monitoring/{server_id}
 
-Eliminar Backups 
-  Se define una politica de retencion y por ssh se Eliminar
-  se registra cuales y cuando se eliminaron
+        Lógica: El backend consulta el inventario, identifica si es un servidor Legacy y dispara el proceso de recolección correspondiente.
 
+B. Módulo de Respaldos (/backup)
 
+Gestiona el ciclo de vida del dato desde su generación hasta su almacenamiento redundante y purga.
 
+    Normalización de Nomenclatura: Todos los archivos siguen el estándar BK_{db_name}_{fecha}_{ip_suffix}.sql.gz.
 
-3. Busqueda de Activos
-Para esto aun no se como hacerlo, es un buscador que tiene el nombre de la base de datos:
-A) Busqueda total en TODOS los servers
-B) Busqueda por filtro
-  x RDBS
-  x servidores
-  x tamanio
+        Ejemplo: Un backup del servidor 148.215.1.98 se nombraría ..._1_98.sql.gz.
 
+    Transferencia y Redundancia:
 
+        Descargas vía SFTP al servidor de SGIR.
 
+        Sincronización opcional a nubes externas (S3, Azure) utilizando Rclone.
 
+    Políticas de Retención: Eliminación automatizada de respaldos antiguos basada en la criticidad del servidor y registro en bitácora de auditoría.
 
+    Ruta Sugerida: POST /backup/execute/{server_id} o GET /backup/status/{server_id}.
 
+C. Búsqueda de Activos (/assets o /finding)
 
+Un motor de búsqueda global para localizar recursos específicos dentro de toda la red de servidores registrados.
 
+    Búsqueda Global: Localización de bases de datos por nombre en todo el inventario.
 
+    Filtros de Precisión:
 
+        Filtrado por tipo de RDBMS (ej. "Solo Oracle").
 
+        Filtrado por categoría de servidor (ej. "Bases de datos en servidores Críticos").
 
+        Filtrado por tamaño (ej. "Bases de datos mayores a 50GB").
 
+    Ruta Sugerida: GET /assets/search?q={query}&type={rdbms}&priority={level}.
 
-Me ayudaras a refiniar mi siguiente textualmente en lenguaje de alto nivel lo siguiente. Backend usando uv para crear el projecto, facil manejo de dependencias y posterior docker image del mismo. Sistema de monitoreo de instancias de bd (VM en la misma red, para testear se usara containers), usare fastapi principalmente y sqlalchemy. Monitoreara servers legacy y no legacy, rdbms como mysql 5.x, 8.x, Mongo, Oracle 10g, 19c. Monitoreo basico incluira CPU, RAM , DISK, monitoreo de bd por medio de un usuario , get_connections, get_queries_more_heavy, how_many_db_are_in_db_instance, sum of the sizeof the all the db. 
+3. Lógica de Persistencia y Bitácora
 
+Cada acción realizada por los módulos anteriores se registra en una Bitácora Maestra en PostgreSQL, la cual almacena:
+
+    Timestamp: Fecha y hora exacta de la ejecución.
+
+    Actor: El origen de la petición (sistema o usuario).
+
+    Resultado: Tamaño del backup, tiempo de respuesta del monitor o éxito/error de la tarea.
+
+    Metadata: Ruta física del archivo generado y hash de integridad (SHA256).
+
+Esta estructura permite que el backend sea un cerebro centralizado que "entiende" qué tipo de servidor está consultando sin necesidad de que el frontend conozca los detalles técnicos de cada versión de base de datos.
+
+¿Quieres que desarrollemos ahora el esquema de tablas para PostgreSQL que soportará esta lógica de inventario y categorías?
