@@ -73,6 +73,16 @@ Un motor de búsqueda global para localizar recursos específicos dentro de toda
 
     Ruta Sugerida: GET /assets/search?q={query}&type={rdbms}&priority={level}.
 
+D. Ingesta Masiva de Datos (/uploadData)
+
+Permite la carga masiva de inventario de servidores y bases de datos mediante archivos CSV, facilitando el aprovisionamiento inicial y actualizaciones a gran escala.
+
+    Funcionalidad: Procesamiento asíncrono de archivos CSV para la inserción de activos en el inventario.
+
+    Validación: Verificación de duplicados (por IP/Hostname), validación de tipos de motor de base de datos y asignación automática de niveles de criticidad.
+
+    Ruta Sugerida: POST /uploadData
+
 3. Lógica de Persistencia y Bitácora
 
 Cada acción realizada por los módulos anteriores se registra en una Bitácora Maestra en PostgreSQL, la cual almacena:

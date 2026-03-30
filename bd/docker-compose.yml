@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sgir_postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=sgir_admin
+      - POSTGRES_PASSWORD=sgir_secure_password
+      - POSTGRES_DB=sgir_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./modelo_fisico.sql:/docker-entrypoint-initdb.d/01_init.sql
+
+volumes:
+  postgres_data:
