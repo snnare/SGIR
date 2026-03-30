@@ -18,6 +18,11 @@ CREATE TABLE niveles_criticidad (
     politica_retencion_dias INTEGER NOT NULL DEFAULT 7
 );
 
+INSERT INTO niveles_criticidad (nombre_nivel, politica_retencion_dias) VALUES
+('Baja', 7),
+('Media', 15),
+('Crítica', 30);
+
 -- 3. Catálogo de Motores de DB
 CREATE TABLE motores_db (
     id_motor SERIAL PRIMARY KEY,
