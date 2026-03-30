@@ -27,8 +27,9 @@ INSERT INTO niveles_criticidad (nombre_nivel, politica_retencion_dias) VALUES
 CREATE TABLE motores_db (
     id_motor SERIAL PRIMARY KEY,
     nombre_motor VARCHAR(50) NOT NULL,
-    version VARCHAR(20) NOT NULL,
-    es_legacy BOOLEAN DEFAULT FALSE
+    version VARCHAR(100) NOT NULL,
+    es_legacy BOOLEAN DEFAULT FALSE,
+    CONSTRAINT uq_motores_db UNIQUE (nombre_motor, version)
 );
 
 -- 4. Usuarios del Sistema
@@ -48,7 +49,7 @@ CREATE TABLE servidores (
     id_nivel INTEGER REFERENCES niveles_criticidad(id_nivel),
     hostname VARCHAR(100) NOT NULL,
     ip_address VARCHAR(45) NOT NULL,
-    os_type VARCHAR(50),
+    os_type VARCHAR(255),
     ssh_user VARCHAR(50),
     ssh_port INTEGER DEFAULT 22,
     ssh_key_path VARCHAR(255),

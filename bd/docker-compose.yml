@@ -4,8 +4,8 @@ services:
     container_name: sgir_postgres
     restart: always
     environment:
-      - POSTGRES_USER=sgir_admin
-      - POSTGRES_PASSWORD=sgir_secure_password
+      - POSTGRES_USER=sgir
+      - POSTGRES_PASSWORD=sgir
       - POSTGRES_DB=sgir_db
     ports:
       - "5432:5432"
