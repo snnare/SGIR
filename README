@@ -1,104 +1,61 @@
-Esta es la versión final y optimizada del documento técnico para el proyecto SGIR. He integrado la arquitectura basada en patrones de diseño y estructurado los tres pilares de la API (/monitoring, /backup, /assets) para que sea escalable y profesional.
-SGIR: Sistema de Gestión de Infraestructura y Recursos
+# SGIR: Sistema de Gestión de Infraestructura y Recursos
 
 SGIR es una plataforma de backend diseñada para la administración centralizada de infraestructura heterogénea. El sistema permite supervisar y gestionar servidores tanto Legacy como modernos, garantizando la integridad de los datos y la visibilidad total de los activos sin requerir la instalación de agentes en los nodos remotos.
-Stack Tecnológico Principal
 
-    Runtime: Python 3.12+ (Gestionado con UV para una resolución de dependencias ultra rápida).
+## 1. Stack Tecnológico Principal
 
-    Framework: FastAPI (Arquitectura asíncrona y tipado estricto con Pydantic).
+*   **Runtime**: Python 3.12+ (Gestionado con **UV** para resolución de dependencias ultra rápida).
+*   **Framework**: **FastAPI** (Arquitectura asíncrona y tipado estricto con Pydantic).
+*   **Base de Datos Core**: **PostgreSQL 16** (Inventario, bitácoras de auditoría y estados de salud).
+*   **Comunicación**: **SSH** (Paramiko/AsyncSSH) y **Drivers nativos** de RDBMS.
+*   **Infraestructura**: **Docker & Docker Compose** para entornos de desarrollo y pruebas.
 
-    Base de Datos: PostgreSQL (Inventario, bitácoras de auditoría y estados de salud).
+## 2. Entorno de Desarrollo y Pruebas (Docker)
 
-    Comunicación: SSH (Paramiko/AsyncSSH) y Drivers nativos de BD (SQLAlchemy/Motor).
+El proyecto incluye un entorno pre-configurado en `bd/docker-compose.yml` para validar la lógica de monitoreo y respaldos en diversos escenarios:
 
-1. Clasificación de Activos (Matriz de Criticidad)
+| Servicio | Imagen | Puerto Host | Propósito |
+| :--- | :--- | :--- | :--- |
+| **sgir_postgres** | `postgres:16-alpine` | 5432 | Base de datos maestra de SGIR. |
+| **sgir_mysql5** | `mysql:5.7` | 3305 | Servidor Legacy para pruebas de compatibilidad. |
+| **sgir_mysql8** | `mysql:8.0` | 3308 | Servidor moderno con políticas de seguridad estrictas. |
+| **sgir_oracle19c** | `oracle-19c` | 1521 | Infraestructura de Misión Crítica (RH-UAEMEX). |
+| **sgir_ssh_server**| `openssh-server` | 2222 | Emulación de servidor remoto para métricas de SO. |
 
-Para priorizar las tareas de respaldo y monitoreo, los servidores se categorizan según su impacto en la operación:
+## 3. Matriz de Monitoreo SRE (Golden Signals)
 
-    Nivel 1: Estándar (Normal): Entornos de desarrollo, pruebas o herramientas internas no críticas.
+Para cada activo registrado, el sistema extrae métricas siguiendo estándares de Site Reliability Engineering (SRE):
 
-    Nivel 2: Productivo (Importante): Servidores que soportan operaciones diarias con usuarios activos. Requieren monitoreo constante.
+### A. Monitoreo de Infraestructura Base (vía SSH)
+*   **CPU**: Uso porcentual y Load Average.
+*   **RAM**: Memoria libre, usada y buffers/cache.
+*   **Disco**: Espacio disponible y porcentaje de ocupación por punto de montaje.
 
-    Nivel 3: Misión Crítica (Crítico): Infraestructura vital (Core). El fallo de estos sistemas implica la detención total de procesos de negocio o pérdida de datos sensibles.
+### B. Monitoreo de RDBMS (Drivers Nativos)
+Se utiliza un **Factory Pattern** para despachar el driver correcto según la versión detectada:
 
-2. Arquitectura de la API: Endpoints Principales
+| Métrica SRE | MySQL (5.x / 8.x) | Oracle (19c) |
+| :--- | :--- | :--- |
+| **Disponibilidad** | Uptime, Connection Status | PDB Status (READ WRITE), Listener. |
+| **Saturación** | Threads Connected / Running | Active Sessions, FRA (Archive Logs) Usage. |
+| **Rendimiento** | Stuck Queries (Locked), Slow Queries | Wait Events, Enqueues (Locks). |
+| **Errores** | Aborted Connects | Invalid Objects (Esquema RH-UAEMEX). |
+| **Capacidad** | Peso Total (GB), DB Count | Tablespace Usage (Data Files). |
 
-Para evitar la redundancia de código y facilitar el mantenimiento, el backend implementa un Factory Pattern. En lugar de crear rutas para cada versión de base de datos, el sistema detecta automáticamente la versión y el estado "Legacy" desde el inventario en PostgreSQL para ejecutar el driver adecuado.
-A. Módulo de Monitoreo (/monitoring)
+## 4. Configuración de Acceso (Test Environment)
 
-Este endpoint centraliza la salud del hardware y los motores de base de datos de forma no invasiva.
+Para las pruebas de monitoreo, se han creado usuarios con el **Principio de Menor Privilegio**:
 
-    Infraestructura Base: Obtención de métricas de CPU, RAM y almacenamiento mediante comandos nativos vía SSH.
+*   **MySQL (5 & 8)**: `monitor_user` / `monitor_pass` (Permisos: `SELECT`, `PROCESS`, `REPLICATION CLIENT`).
+*   **Oracle 19c**: `monitor_user` / `monitor_pass` (Rol: `SELECT_CATALOG_ROLE` y `SELECT ANY DICTIONARY`).
+*   **SSH**: `sgir_user` / `sgir_pass` (Puerto 2222).
 
-    Health Checks de RDBMS: Consultas de diagnóstico para MySQL (5.x/8.x), Oracle (10g/19c) y MongoDB.
+## 5. Arquitectura de la API: Pilares Principales
 
-        Métricas SRE (Golden Signals):
-        - Disponibilidad: Status de conexión y Uptime del motor.
-        - Saturación: Threads conectados vs máx. permitido y Threads ejecutándose (Running).
-        - Rendimiento/Errores: Detección de hilos bloqueados (stuck queries) y conteo de Slow Queries.
-        - Inventario/Capacidad: Peso total en GB, número de bases de datos y tráfico total (Questions).
+1.  **/monitoring**: Salud del hardware y RDBMS de forma no invasiva.
+2.  **/backup**: Ciclo de vida del dato (Generación -> SFTP -> Nube -> Purga).
+3.  **/assets**: Motor de búsqueda global de recursos con filtros de precisión.
+4.  **/uploadData**: Ingesta masiva de inventario mediante archivos CSV.
 
-    Ruta Sugerida: GET /monitoring/{server_id}
-
-        Lógica: El backend consulta el inventario, identifica si es un servidor Legacy y dispara el proceso de recolección correspondiente.
-
-B. Módulo de Respaldos (/backup)
-
-Gestiona el ciclo de vida del dato desde su generación hasta su almacenamiento redundante y purga.
-
-    Normalización de Nomenclatura: Todos los archivos siguen el estándar BK_{db_name}_{fecha}_{ip_suffix}.sql.gz.
-
-        Ejemplo: Un backup del servidor 148.215.1.98 se nombraría ..._1_98.sql.gz.
-
-    Transferencia y Redundancia:
-
-        Descargas vía SFTP al servidor de SGIR.
-
-        Sincronización opcional a nubes externas (S3, Azure) utilizando Rclone.
-
-    Políticas de Retención: Eliminación automatizada de respaldos antiguos basada en la criticidad del servidor y registro en bitácora de auditoría.
-
-    Ruta Sugerida: POST /backup/execute/{server_id} o GET /backup/status/{server_id}.
-
-C. Búsqueda de Activos (/assets o /finding)
-
-Un motor de búsqueda global para localizar recursos específicos dentro de toda la red de servidores registrados.
-
-    Búsqueda Global: Localización de bases de datos por nombre en todo el inventario.
-
-    Filtros de Precisión:
-
-        Filtrado por tipo de RDBMS (ej. "Solo Oracle").
-
-        Filtrado por categoría de servidor (ej. "Bases de datos en servidores Críticos").
-
-        Filtrado por tamaño (ej. "Bases de datos mayores a 50GB").
-
-    Ruta Sugerida: GET /assets/search?q={query}&type={rdbms}&priority={level}.
-
-D. Ingesta Masiva de Datos (/uploadData)
-
-Permite la carga masiva de inventario de servidores y bases de datos mediante archivos CSV, facilitando el aprovisionamiento inicial y actualizaciones a gran escala.
-
-    Funcionalidad: Procesamiento asíncrono de archivos CSV para la inserción de activos en el inventario.
-
-    Validación: Verificación de duplicados (por IP/Hostname), validación de tipos de motor de base de datos y asignación automática de niveles de criticidad.
-
-    Ruta Sugerida: POST /uploadData
-
-3. Lógica de Persistencia y Bitácora
-
-Cada acción realizada por los módulos anteriores se registra en una Bitácora Maestra en PostgreSQL, la cual almacena:
-
-    Timestamp: Fecha y hora exacta de la ejecución.
-
-    Actor: El origen de la petición (sistema o usuario).
-
-    Resultado: Tamaño del backup, tiempo de respuesta del monitor o éxito/error de la tarea.
-
-    Metadata: Ruta física del archivo generado y hash de integridad (SHA256).
-
-Esta estructura permite que el backend sea un cerebro centralizado que "entiende" qué tipo de servidor está consultando sin necesidad de que el frontend conozca los detalles técnicos de cada versión de base de datos.
-
-¿Quieres que desarrollemos ahora el esquema de tablas para PostgreSQL que soportará esta lógica de inventario y categorías?
+---
+**Nota**: Todas las acciones operativas se registran en una **Bitácora Maestra** en PostgreSQL para trazabilidad y auditoría, incluyendo hashes SHA256 para integridad de respaldos.

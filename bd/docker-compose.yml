@@ -53,6 +53,7 @@ services:
       - "1521:1521"
     volumes:
       - oracle_data:/opt/oracle/oradata
+      - ./monitoreo-oracle/init.sql:/opt/oracle/scripts/setup/01_init.sql
 
   # ==========================================
   # SERVIDOR SSH PARA PRUEBAS DE MONITOREO
