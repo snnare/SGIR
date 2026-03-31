@@ -55,6 +55,19 @@ services:
       - oracle_data:/opt/oracle/oradata
       - ./monitoreo-oracle/init.sql:/opt/oracle/scripts/setup/01_init.sql
 
+  mongodb:
+    image: mongo:latest
+    container_name: sgir_mongodb
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=sgir
+      - MONGO_INITDB_ROOT_PASSWORD=sgir
+      - MONGO_INITDB_DATABASE=admin
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./monitoreo-mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+
   # ==========================================
   # SERVIDOR SSH PARA PRUEBAS DE MONITOREO
   # ==========================================

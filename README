@@ -1,61 +1,87 @@
 # SGIR: Sistema de Gestión de Infraestructura y Recursos
 
-SGIR es una plataforma de backend diseñada para la administración centralizada de infraestructura heterogénea. El sistema permite supervisar y gestionar servidores tanto Legacy como modernos, garantizando la integridad de los datos y la visibilidad total de los activos sin requerir la instalación de agentes en los nodos remotos.
+SGIR es una plataforma de backend diseñada para la administración centralizada de infraestructura heterogénea (Legacy y Moderna). El sistema permite supervisar hardware y bases de datos de forma **no invasiva** (agentless), garantizando la integridad de los datos y la visibilidad total de los activos mediante protocolos estándar (SSH y Drivers nativos).
+
+---
 
 ## 1. Stack Tecnológico Principal
 
 *   **Runtime**: Python 3.12+ (Gestionado con **UV** para resolución de dependencias ultra rápida).
-*   **Framework**: **FastAPI** (Arquitectura asíncrona y tipado estricto con Pydantic).
+*   **Framework**: **FastAPI** (Arquitectura asíncrona, inyección de dependencias y tipado estricto).
 *   **Base de Datos Core**: **PostgreSQL 16** (Inventario, bitácoras de auditoría y estados de salud).
-*   **Comunicación**: **SSH** (Paramiko/AsyncSSH) y **Drivers nativos** de RDBMS.
-*   **Infraestructura**: **Docker & Docker Compose** para entornos de desarrollo y pruebas.
+*   **Comunicación**: **SSH** (Paramiko/AsyncSSH) y **Drivers nativos** (SQLAlchemy, Motor, Cx_Oracle).
+*   **Infraestructura de Pruebas**: **Docker & Docker Compose** (Entorno multi-motor pre-configurado).
 
-## 2. Entorno de Desarrollo y Pruebas (Docker)
+---
 
-El proyecto incluye un entorno pre-configurado en `bd/docker-compose.yml` para validar la lógica de monitoreo y respaldos en diversos escenarios:
+## 2. Entorno de Desarrollo y Pruebas (Docker Compose)
 
-| Servicio | Imagen | Puerto Host | Propósito |
-| :--- | :--- | :--- | :--- |
-| **sgir_postgres** | `postgres:16-alpine` | 5432 | Base de datos maestra de SGIR. |
-| **sgir_mysql5** | `mysql:5.7` | 3305 | Servidor Legacy para pruebas de compatibilidad. |
-| **sgir_mysql8** | `mysql:8.0` | 3308 | Servidor moderno con políticas de seguridad estrictas. |
-| **sgir_oracle19c** | `oracle-19c` | 1521 | Infraestructura de Misión Crítica (RH-UAEMEX). |
-| **sgir_ssh_server**| `openssh-server` | 2222 | Emulación de servidor remoto para métricas de SO. |
+El proyecto incluye un ecosistema de contenedores en `bd/docker-compose.yml` para validar la lógica de los drivers de monitoreo:
+
+| Servicio | Contenedor | Imagen | Puerto | Propósito |
+| :--- | :--- | :--- | :--- | :--- |
+| **PostgreSQL** | `sgir_postgres` | `postgres:16-alpine` | 5432 | Almacén maestro de SGIR (Inventario y Logs). |
+| **MySQL Legacy**| `sgir_mysql5` | `mysql:5.7` | 3305 | Pruebas de drivers antiguos y métricas básicas. |
+| **MySQL Modern**| `sgir_mysql8` | `mysql:8.0` | 3308 | Servidor actual con seguridad mejorada. |
+| **Oracle 19c** | `sgir_oracle19c`| `oracle-19c` | 1521 | **Misión Crítica** (Esquema RH-UAEMEX). |
+| **MongoDB** | `sgir_mongodb` | `mongo:latest` | 27017 | Almacenamiento NoSQL y métricas de documentos. |
+| **SSH Server** | `sgir_ssh_server`| `openssh-server` | 2222 | Emulación de servidor Linux para métricas de SO. |
+
+---
 
 ## 3. Matriz de Monitoreo SRE (Golden Signals)
 
-Para cada activo registrado, el sistema extrae métricas siguiendo estándares de Site Reliability Engineering (SRE):
+El sistema implementa un **Factory Pattern** para despachar métricas específicas según el motor y su criticidad:
 
-### A. Monitoreo de Infraestructura Base (vía SSH)
-*   **CPU**: Uso porcentual y Load Average.
-*   **RAM**: Memoria libre, usada y buffers/cache.
-*   **Disco**: Espacio disponible y porcentaje de ocupación por punto de montaje.
+### A. Infraestructura Base (vía SSH)
+*   **CPU**: Uso por core, Load Average (1m, 5m, 15m).
+*   **Memoria**: RAM Total vs Libre, Swap usage.
+*   **Almacenamiento**: Puntos de montaje (%), i-nodes disponibles.
 
-### B. Monitoreo de RDBMS (Drivers Nativos)
-Se utiliza un **Factory Pattern** para despachar el driver correcto según la versión detectada:
+### B. Motores de Base de Datos (Métricas Específicas)
 
-| Métrica SRE | MySQL (5.x / 8.x) | Oracle (19c) |
-| :--- | :--- | :--- |
-| **Disponibilidad** | Uptime, Connection Status | PDB Status (READ WRITE), Listener. |
-| **Saturación** | Threads Connected / Running | Active Sessions, FRA (Archive Logs) Usage. |
-| **Rendimiento** | Stuck Queries (Locked), Slow Queries | Wait Events, Enqueues (Locks). |
-| **Errores** | Aborted Connects | Invalid Objects (Esquema RH-UAEMEX). |
-| **Capacidad** | Peso Total (GB), DB Count | Tablespace Usage (Data Files). |
-
-## 4. Configuración de Acceso (Test Environment)
-
-Para las pruebas de monitoreo, se han creado usuarios con el **Principio de Menor Privilegio**:
-
-*   **MySQL (5 & 8)**: `monitor_user` / `monitor_pass` (Permisos: `SELECT`, `PROCESS`, `REPLICATION CLIENT`).
-*   **Oracle 19c**: `monitor_user` / `monitor_pass` (Rol: `SELECT_CATALOG_ROLE` y `SELECT ANY DICTIONARY`).
-*   **SSH**: `sgir_user` / `sgir_pass` (Puerto 2222).
-
-## 5. Arquitectura de la API: Pilares Principales
-
-1.  **/monitoring**: Salud del hardware y RDBMS de forma no invasiva.
-2.  **/backup**: Ciclo de vida del dato (Generación -> SFTP -> Nube -> Purga).
-3.  **/assets**: Motor de búsqueda global de recursos con filtros de precisión.
-4.  **/uploadData**: Ingesta masiva de inventario mediante archivos CSV.
+| Métrica SRE | MySQL (5.7 / 8.0) | Oracle 19c (Crítico) | MongoDB (NoSQL) |
+| :--- | :--- | :--- | :--- |
+| **Disponibilidad** | Uptime, Connection Ping. | PDB Open Mode (READ WRITE), Listener status. | ServerStatus, Ping command. |
+| **Saturación** | Threads Connected vs Max, Threads Running. | **Tablespace Usage (%)**, FRA (Archive Logs) Space. | WiredTiger Queues (Read/Write Tickets), Connections. |
+| **Rendimiento** | Stuck Queries (Locked), Slow Queries count. | Wait Events, Enqueues (Locks), Session load. | OpCounters (Insert/Query/Update), Global Lock %. |
+| **Errores** | Aborted Connects, Handshake failures. | **Invalid Objects (RH-UAEMEX)**, Alert Logs. | Assert Errors, Page Faults (Cache miss). |
+| **Capacidad** | Data Size (GB), Index Size, DB Count. | Data Files size, Segment fragmentation. | DB Storage Size, Index Size, Document count. |
 
 ---
-**Nota**: Todas las acciones operativas se registran en una **Bitácora Maestra** en PostgreSQL para trazabilidad y auditoría, incluyendo hashes SHA256 para integridad de respaldos.
+
+## 4. Guía de Acceso y Credenciales (Entorno de Test)
+
+Se han configurado usuarios siguiendo el **Principio de Menor Privilegio** para un monitoreo seguro:
+
+### MySQL (Instancias 3305 y 3308)
+*   **Usuario**: `monitor_user` / `monitor_pass`
+*   **Permisos**: `SELECT`, `PROCESS`, `REPLICATION CLIENT`.
+*   **BD de Prueba**: `sgir_test_db` (v5) / `sgir_test_db_8` (v8).
+
+### Oracle 19c (Instancia 1521)
+*   **Usuario Monitoreo**: `monitor_user` / `monitor_pass`
+*   **Esquema Crítico**: `RH-UAEMEX` (pass: `rh_pass_123`).
+*   **Privilegios SRE**: `SELECT_CATALOG_ROLE`, `SELECT ANY DICTIONARY`.
+*   **PDB**: `ORCLPDB1`.
+
+### MongoDB (Instancia 27017)
+*   **Usuario**: `monitor_user` / `monitor_pass`
+*   **Auth DB**: `admin`.
+*   **Roles**: `clusterMonitor` (Métricas de performance), `readAnyDatabase`.
+*   **BD de Prueba**: `sgir_test_db_mongo`.
+
+### SSH (Puerto 2222)
+*   **Usuario**: `sgir_user` / `sgir_pass`.
+
+---
+
+## 5. Arquitectura y Pilares de la API
+
+1.  **/monitoring**: Recolección asíncrona de métricas de hardware y RDBMS.
+2.  **/backup**: Gestión del ciclo de vida del dato (Dump -> SFTP -> Cloud -> Retention Policy).
+3.  **/assets**: Búsqueda global de recursos (Encontrar "donde está la tabla X en toda la red").
+4.  **/uploadData**: Carga masiva de inventario mediante CSV con validación de tipos.
+
+---
+**Nota de Seguridad**: Todas las contraseñas de infraestructura se almacenan cifradas en la base de datos core (AES-256) y las acciones operativas se registran con hash SHA256 en la **Bitácora Maestra**.
