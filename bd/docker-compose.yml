@@ -11,7 +11,63 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./modelo_fisico.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./documentacion/modelo_fisico.sql:/docker-entrypoint-initdb.d/01_init.sql
+
+  mysql5:
+    image: mysql:5.7
+    container_name: sgir_mysql5
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=sgir
+      - MYSQL_DATABASE=sgir_db_5
+      - MYSQL_USER=sgir
+      - MYSQL_PASSWORD=sgir
+    ports:
+      - "3305:3306"
+    volumes:
+      - ./monitoreo-mysql-5/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  mysql8:
+    image: mysql:8.0
+    container_name: sgir_mysql8
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=sgir
+      - MYSQL_DATABASE=sgir_db_8
+      - MYSQL_USER=sgir
+      - MYSQL_PASSWORD=sgir
+    ports:
+      - "3308:3306"
+    volumes:
+      - ./monitoreo-mysql-8/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  oracle19c:
+    image: doctorkirk/oracle-19c
+    container_name: sgir_oracle19c
+    restart: always
+    environment:
+      - ORACLE_SID=ORCLCDB
+      - ORACLE_PWD=sgir
+      - ORACLE_CHARACTERSET=AL32UTF8
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+
+  # ==========================================
+  # SERVIDOR SSH PARA PRUEBAS DE MONITOREO
+  # ==========================================
+  ssh_server:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: sgir_ssh_server
+    restart: always
+    environment:
+      - USER_NAME=sgir_user
+      - USER_PASSWORD=sgir_pass
+      - PASSWORD_ACCESS=true
+    ports:
+      - "2222:2222"
 
 volumes:
   postgres_data:
+  oracle_data:

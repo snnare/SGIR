@@ -33,7 +33,11 @@ Este endpoint centraliza la salud del hardware y los motores de base de datos de
 
     Health Checks de RDBMS: Consultas de diagnóstico para MySQL (5.x/8.x), Oracle (10g/19c) y MongoDB.
 
-        Métricas Clave: Conexiones activas, detección de hilos bloqueados (stuck queries), número de bases de datos y peso total en GB.
+        Métricas SRE (Golden Signals):
+        - Disponibilidad: Status de conexión y Uptime del motor.
+        - Saturación: Threads conectados vs máx. permitido y Threads ejecutándose (Running).
+        - Rendimiento/Errores: Detección de hilos bloqueados (stuck queries) y conteo de Slow Queries.
+        - Inventario/Capacidad: Peso total en GB, número de bases de datos y tráfico total (Questions).
 
     Ruta Sugerida: GET /monitoring/{server_id}
 
