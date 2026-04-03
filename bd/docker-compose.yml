@@ -11,7 +11,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./documentacion/modelo_fisico.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./documentacion/01_modelo_fisico.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./documentacion/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql 
 
   mysql5:
     image: mysql:5.7
@@ -25,7 +26,7 @@ services:
     ports:
       - "3305:3306"
     volumes:
-      - ./monitoreo-mysql-5/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./monitoreo/mysql5/01_usuario_mysql5.sql:/docker-entrypoint-initdb.d/init.sql
 
   mysql8:
     image: mysql:8.0
@@ -39,21 +40,23 @@ services:
     ports:
       - "3308:3306"
     volumes:
-      - ./monitoreo-mysql-8/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./monitoreo/mysql8/01_usuario_mysql8.sql:/docker-entrypoint-initdb.d/01_usuario.sql
+     # - ./monitoreo-mysql-8/init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  oracle19c:
-    image: doctorkirk/oracle-19c
-    container_name: sgir_oracle19c
-    restart: always
-    environment:
-      - ORACLE_SID=ORCLCDB
-      - ORACLE_PWD=sgir
-      - ORACLE_CHARACTERSET=AL32UTF8
-    ports:
-      - "1521:1521"
-    volumes:
-      - oracle_data:/opt/oracle/oradata
-      - ./monitoreo-oracle/init.sql:/opt/oracle/scripts/setup/01_init.sql
+  # Esto por que consume mucho 
+  #oracle19c:
+  #  image: doctorkirk/oracle-19c
+  #  container_name: sgir_oracle19c
+  #  restart: always
+  #  environment:
+  #    - ORACLE_SID=ORCLCDB
+  #    - ORACLE_PWD=sgir
+  #    - ORACLE_CHARACTERSET=AL32UTF8
+  #  ports:
+  #    - "1521:1521"
+  #  volumes:
+  #    - oracle_data:/opt/oracle/oradata
+  #    - ./monitoreo-oracle/init.sql:/opt/oracle/scripts/setup/01_init.sql
 
   mongodb:
     image: mongo:latest
@@ -66,8 +69,8 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./monitoreo-mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-
+     # - ./monitoreo-mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./monitoreo/mongodb/01_usuario.js:/docker-entrypoint-initdb.d/01_usuario.js:ro
   # ==========================================
   # SERVIDOR SSH PARA PRUEBAS DE MONITOREO
   # ==========================================
@@ -81,7 +84,21 @@ services:
       - PASSWORD_ACCESS=true
     ports:
       - "2222:2222"
+  fedora_node:
+    image: fedora:latest
+    container_name: sgir_fedora
+    restart: always
+    tty: true
+    stdin_open: true
+    environment:
+      - USER_NAME=sgir
+      - USER_PASSWORD=sgir
+      - DB_USER=sgir
+      - DB_PASSWORD=sgir
+    # If you need to test connectivity to your DBs or SSH server:
+    networks:
+      - default
 
 volumes:
   postgres_data:
-  oracle_data:
+  #oracle_data:
