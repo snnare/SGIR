@@ -1,129 +1,203 @@
--- Script de Creación de Base de Datos - SGIR (Normalizado)
--- Motor: PostgreSQL
+-- ==============================================================================
+-- SISTEMA DE GESTIÓN DE INFRAESTRUCTURA Y RESPALDOS (SGIR)
+-- MODELO FÍSICO PARA POSTGRESQL 16
+-- ==============================================================================
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- ------------------------------------------------------------------------------
+-- 1. CREACIÓN DE CATÁLOGOS (Tablas sin llaves foráneas)
+-- ------------------------------------------------------------------------------
 
--- ==========================================
--- 1. MÓDULO DE IDENTIDAD Y ACCESO (HUMANOS)
--- ==========================================
+CREATE TABLE Estado_General (
+    id_estado INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_estado VARCHAR(50) NOT NULL UNIQUE
+);
 
-CREATE TABLE cat_rol (
-    id_rol SERIAL PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL UNIQUE,
+CREATE TABLE Rol_Usuario (
+    id_rol INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_rol VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE Nivel_Criticidad (
+    id_nivel_criticidad INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_nivel VARCHAR(50) NOT NULL UNIQUE,
     descripcion TEXT
 );
 
-CREATE TABLE usuario (
-    id_usuario UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_rol INTEGER REFERENCES cat_rol(id_rol) ON DELETE RESTRICT,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(100) NOT NULL UNIQUE,
+CREATE TABLE Tipo_Acceso (
+    id_tipo_acceso INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_tipo VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE DBMS (
+    id_dbms INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_dbms VARCHAR(100) NOT NULL,
+    version VARCHAR(50) NOT NULL,
+    descripcion TEXT
+);
+
+CREATE TABLE Tipo_Respaldo (
+    id_tipo_respaldo INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_tipo VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE Tipo_Almacenamiento (
+    id_tipo_almacenamiento INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_tipo VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE Nivel_Alerta (
+    id_nivel_alerta INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_nivel VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE Tipo_Metrica (
+    id_tipo_metrica INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_tipo VARCHAR(50) NOT NULL,
+    unidad_medida VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE Tipo_Evento_Auditoria (
+    id_tipo_evento INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_evento VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- ------------------------------------------------------------------------------
+-- 2. TABLAS PRINCIPALES (NIVEL 1)
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE Usuario (
+    id_usuario INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombres VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    esta_activo BOOLEAN DEFAULT TRUE,
-    ultimo_login_at TIMESTAMP WITH TIME ZONE,
-    intentos_fallidos INTEGER DEFAULT 0,
-    bloqueado_hasta_at TIMESTAMP WITH TIME ZONE,
-    creado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    fecha_creacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    id_rol INT NOT NULL REFERENCES Rol_Usuario(id_rol),
+    id_estado_usuario INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
-CREATE TABLE sesion_usuario (
-    id_sesion UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_usuario UUID REFERENCES usuario(id_usuario) ON DELETE CASCADE,
-    refresh_token VARCHAR(512) NOT NULL UNIQUE,
-    ip_origen INET,
-    user_agent VARCHAR(255),
-    expira_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    creado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- ==========================================
--- 2. MÓDULO DE INFRAESTRUCTURA (ASSETS)
--- ==========================================
-
-CREATE TABLE cat_nivel_criticidad (
-    id_nivel SERIAL PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL UNIQUE,
-    dias_retencion INTEGER NOT NULL DEFAULT 7
-);
-
-CREATE TABLE cat_motor_db (
-    id_motor SERIAL PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL,
-    version VARCHAR(20) NOT NULL,
+CREATE TABLE Servidor (
+    id_servidor INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_servidor VARCHAR(100) NOT NULL,
+    direccion_ip VARCHAR(45) NOT NULL, -- Soporta IPv4 e IPv6
     es_legacy BOOLEAN DEFAULT FALSE,
-    CONSTRAINT uq_motor_version UNIQUE (nombre, version)
+    fecha_registro TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    descripcion TEXT,
+    id_nivel_criticidad INT NOT NULL REFERENCES Nivel_Criticidad(id_nivel_criticidad),
+    id_estado_servidor INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
-CREATE TABLE credencial (
-    id_credencial UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    nombre_alias VARCHAR(100) NOT NULL,
-    tipo VARCHAR(10) CHECK (tipo IN ('SSH', 'DB')),
-    usuario VARCHAR(50) NOT NULL,
-    password_cifrado TEXT,
-    llave_privada_path VARCHAR(255),
-    extra_params JSONB,
-    creado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- ------------------------------------------------------------------------------
+-- 3. TABLAS PRINCIPALES (NIVEL 2)
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE Credencial_Acceso (
+    id_credencial INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    usuario VARCHAR(100) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    fecha_creacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    id_tipo_acceso INT NOT NULL REFERENCES Tipo_Acceso(id_tipo_acceso),
+    id_estado_credencial INT NOT NULL REFERENCES Estado_General(id_estado),
+    id_servidor INT NOT NULL REFERENCES Servidor(id_servidor) ON DELETE CASCADE
 );
 
-CREATE TABLE servidor (
-    id_servidor UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_nivel INTEGER REFERENCES cat_nivel_criticidad(id_nivel) ON DELETE RESTRICT,
-    id_credencial UUID REFERENCES credencial(id_credencial) ON DELETE SET NULL,
-    hostname VARCHAR(100) NOT NULL UNIQUE,
-    ip_address INET NOT NULL,
-    puerto_ssh INTEGER DEFAULT 22,
-    sistema_operativo VARCHAR(50),
-    creado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE Ruta_Respaldo (
+    id_ruta INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    descripcion_ruta VARCHAR(150) NOT NULL,
+    path TEXT NOT NULL,
+    id_tipo_almacenamiento INT NOT NULL REFERENCES Tipo_Almacenamiento(id_tipo_almacenamiento),
+    id_estado_ruta INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
-CREATE TABLE instancia_db (
-    id_instancia UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_servidor UUID REFERENCES servidor(id_servidor) ON DELETE CASCADE,
-    id_motor INTEGER REFERENCES cat_motor_db(id_motor) ON DELETE RESTRICT,
-    id_credencial UUID REFERENCES credencial(id_credencial) ON DELETE SET NULL,
-    nombre_db VARCHAR(100) NOT NULL,
-    puerto_db INTEGER,
-    creado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE Política_de_Respaldo (
+    id_politica INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_politica VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    frecuencia_horas INT NOT NULL,
+    retencion_dias INT NOT NULL,
+    id_tipo_respaldo INT NOT NULL REFERENCES Tipo_Respaldo(id_tipo_respaldo),
+    id_estado_politica INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
--- ==========================================
--- 3. MÓDULO DE OPERACIONES (MÉTRICAS Y LOGS)
--- ==========================================
-
-CREATE TABLE metrica_monitoreo (
-    id_metrica BIGSERIAL PRIMARY KEY,
-    id_servidor UUID REFERENCES servidor(id_servidor) ON DELETE CASCADE,
-    id_instancia UUID REFERENCES instancia_db(id_instancia) ON DELETE CASCADE,
-    cpu_uso DECIMAL(5,2),
-    ram_uso DECIMAL(5,2),
-    disco_uso DECIMAL(5,2),
-    conexiones_activas INTEGER,
-    tamano_db_gb DECIMAL(12,2),
-    capturado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE Instancia_DBMS (
+    id_instancia INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_instancia VARCHAR(100) NOT NULL,
+    puerto INT NOT NULL,
+    fecha_inicio TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    id_servidor INT NOT NULL REFERENCES Servidor(id_servidor) ON DELETE CASCADE,
+    id_dbms INT NOT NULL REFERENCES DBMS(id_dbms),
+    id_estado_instancia INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
-CREATE TABLE respaldo (
-    id_respaldo UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    id_instancia UUID REFERENCES instancia_db(id_instancia) ON DELETE CASCADE,
-    nombre_archivo VARCHAR(255) NOT NULL,
-    ruta_local VARCHAR(512),
-    ruta_nube VARCHAR(512),
-    tamano_bytes BIGINT,
-    hash_sha256 VARCHAR(64),
-    estado VARCHAR(20) DEFAULT 'En proceso' CHECK (estado IN ('Exitoso', 'Fallido', 'En proceso')),
-    ejecutado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- ------------------------------------------------------------------------------
+-- 4. TABLAS PRINCIPALES (NIVEL 3)
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE Base_de_Datos (
+    id_base_datos INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre_base VARCHAR(150) NOT NULL,
+    tamano_mb NUMERIC(12, 2), -- Permite almacenar tamaños precisos
+    fecha_creacion TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    id_instancia INT NOT NULL REFERENCES Instancia_DBMS(id_instancia) ON DELETE CASCADE,
+    id_estado_bd INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
-CREATE TABLE log_auditoria (
-    id_log BIGSERIAL PRIMARY KEY,
-    id_usuario UUID REFERENCES usuario(id_usuario) ON DELETE SET NULL,
-    evento VARCHAR(200) NOT NULL,
-    detalles JSONB,
-    creado_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE Monitoreo (
+    id_monitoreo BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- BIGINT por volumen
+    fecha_inicio TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    fecha_fin TIMESTAMPTZ,
+    id_servidor INT NOT NULL REFERENCES Servidor(id_servidor) ON DELETE CASCADE,
+    id_credencial INT NOT NULL REFERENCES Credencial_Acceso(id_credencial),
+    id_estado_monitoreo INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
--- Índices de Optimización
-CREATE INDEX idx_metrica_capturado_at ON metrica_monitoreo(capturado_at);
-CREATE INDEX idx_servidor_ip ON servidor(ip_address);
-CREATE INDEX idx_respaldo_ejecutado_at ON respaldo(ejecutado_at);
-CREATE INDEX idx_log_usuario ON log_auditoria(id_usuario);
+-- ------------------------------------------------------------------------------
+-- 5. TABLAS TRANSACCIONALES E INTERMEDIAS (Gran volumen de datos)
+-- ------------------------------------------------------------------------------
+
+CREATE TABLE Asignacion_Politica_BD (
+    id_base_datos INT NOT NULL REFERENCES Base_de_Datos(id_base_datos) ON DELETE CASCADE,
+    id_politica INT NOT NULL REFERENCES Política_de_Respaldo(id_politica) ON DELETE CASCADE,
+    PRIMARY KEY (id_base_datos, id_politica) -- Llave primaria compuesta
+);
+
+CREATE TABLE Respaldo (
+    id_respaldo BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    fecha_inicio TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    fecha_fin TIMESTAMPTZ,
+    tamano_mb NUMERIC(12, 2),
+    hash_integridad VARCHAR(255),
+    id_base_datos INT NOT NULL REFERENCES Base_de_Datos(id_base_datos),
+    id_politica INT NOT NULL REFERENCES Política_de_Respaldo(id_politica),
+    id_credencial INT NOT NULL REFERENCES Credencial_Acceso(id_credencial),
+    id_ruta_respaldo INT NOT NULL REFERENCES Ruta_Respaldo(id_ruta),
+    id_estado_ejecucion INT NOT NULL REFERENCES Estado_General(id_estado)
+);
+
+CREATE TABLE Métrica (
+    id_metrica BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    valor NUMERIC(10, 2) NOT NULL,
+    fecha_registro TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    id_monitoreo BIGINT NOT NULL REFERENCES Monitoreo(id_monitoreo) ON DELETE CASCADE,
+    id_tipo_metrica INT NOT NULL REFERENCES Tipo_Metrica(id_tipo_metrica)
+);
+
+CREATE TABLE Alerta (
+    id_alerta BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    descripcion TEXT NOT NULL,
+    fecha_alerta TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    id_servidor INT NOT NULL REFERENCES Servidor(id_servidor) ON DELETE CASCADE,
+    id_monitoreo BIGINT REFERENCES Monitoreo(id_monitoreo), -- Puede ser NULL si la alerta no viene del monitoreo directo
+    id_nivel_alerta INT NOT NULL REFERENCES Nivel_Alerta(id_nivel_alerta),
+    id_estado_alerta INT NOT NULL REFERENCES Estado_General(id_estado)
+);
+
+CREATE TABLE Bitacora (
+    id_bitacora BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    entidad_afectada VARCHAR(100) NOT NULL,
+    id_entidad BIGINT NOT NULL, -- Sin FK por ser polimórfico, BIGINT para cubrir cualquier ID
+    descripcion_evento TEXT NOT NULL,
+    fecha_evento TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    id_usuario INT NOT NULL REFERENCES Usuario(id_usuario),
+    id_tipo_evento INT NOT NULL REFERENCES Tipo_Evento_Auditoria(id_tipo_evento)
+);
