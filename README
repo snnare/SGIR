@@ -25,7 +25,8 @@ El proyecto incluye un ecosistema de contenedores en `bd/docker-compose.yml` par
 | **MySQL Modern**| `sgir_mysql8` | `mysql:8.0` | 3308 | Servidor actual con seguridad mejorada. |
 | **Oracle 19c** | `sgir_oracle19c`| `oracle-19c` | 1521 | **Misión Crítica** (Esquema RH-UAEMEX). |
 | **MongoDB** | `sgir_mongodb` | `mongo:latest` | 27017 | Almacenamiento NoSQL y métricas de documentos. |
-| **SSH Server** | `sgir_ssh_server`| `openssh-server` | 2222 | Emulación de servidor Linux para métricas de SO. |
+| **SSH Server** | `sgir_ssh_server`| `openssh-server` | 2222 | Emulación de servidor Linux (OpenSSH). |
+| **Fedora Node** | `sgir_fedora` | `fedora:latest` | 2223 | **Nodo de Monitoreo OS** (top, free, df, ssh). |
 
 ---
 
@@ -37,6 +38,7 @@ El sistema implementa un **Factory Pattern** para despachar métricas específic
 *   **CPU**: Uso por core, Load Average (1m, 5m, 15m).
 *   **Memoria**: RAM Total vs Libre, Swap usage.
 *   **Almacenamiento**: Puntos de montaje (%), i-nodes disponibles.
+*   **Servicios**: Disponibilidad del demonio SSH y herramientas base (`procps-ng`).
 
 ### B. Motores de Base de Datos (Métricas Específicas)
 
@@ -71,8 +73,9 @@ Se han configurado usuarios siguiendo el **Principio de Menor Privilegio** para 
 *   **Roles**: `clusterMonitor` (Métricas de performance), `readAnyDatabase`.
 *   **BD de Prueba**: `sgir_test_db_mongo`.
 
-### SSH (Puerto 2222)
-*   **Usuario**: `sgir_user` / `sgir_pass`.
+### SSH (Servidores de Infraestructura)
+*   **SSH Genérico (2222)**: `sgir_user` / `sgir_pass`.
+*   **Fedora Node (2223)**: `sgir` / `sgir` (Incluye `top`, `free`, `df`).
 
 ---
 

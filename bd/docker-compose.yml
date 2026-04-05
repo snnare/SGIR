@@ -95,7 +95,12 @@ services:
       - USER_PASSWORD=sgir
       - DB_USER=sgir
       - DB_PASSWORD=sgir
-    # If you need to test connectivity to your DBs or SSH server:
+    volumes:
+      - ./monitoreo/fedoraOS/init.sh:/usr/local/bin/init.sh:ro
+    entrypoint: ["/bin/bash", "/usr/local/bin/init.sh"]
+    command: ["tail", "-f", "/dev/null"]
+    ports:
+      - "2223:22"
     networks:
       - default
 
