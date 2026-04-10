@@ -13,6 +13,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./documentacion/01_modelo_fisico.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./documentacion/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql 
+      - ./documentacion/03_seed_contenedores.sql:/docker-entrypoint-initdb.d/03_seed_contenedores.sql 
 
   mysql5:
     image: mysql:5.7
