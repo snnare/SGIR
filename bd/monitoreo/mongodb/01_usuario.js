@@ -11,3 +11,19 @@ db.createUser({
 });
 
 print("Usuario de monitoreo creado exitosamente.");
+
+const baseName = "mi_base_";
+
+for (let i = 1; i <= 50; i++) {
+  let dbName = baseName + i;
+
+  let newDb = db.getSiblingDB(dbName);
+
+  // Insertar documento dummy para forzar creación
+  newDb.init_collection.insertOne({
+    createdAt: new Date(),
+    init: true
+  });
+
+  print("Base creada: " + dbName);
+}

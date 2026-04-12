@@ -13,7 +13,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./documentacion/01_modelo_fisico.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./documentacion/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql 
-      - ./documentacion/03_seed_contenedores.sql:/docker-entrypoint-initdb.d/03_seed_contenedores.sql 
 
   mysql5:
     image: mysql:5.7
@@ -27,7 +26,8 @@ services:
     ports:
       - "3305:3306"
     volumes:
-      - ./monitoreo/mysql5/01_usuario_mysql5.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./monitoreo/mysql5/01_usuario_mysql5.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./monitoreo/mysql5/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
 
   mysql8:
     image: mysql:8.0
@@ -42,22 +42,21 @@ services:
       - "3308:3306"
     volumes:
       - ./monitoreo/mysql8/01_usuario_mysql8.sql:/docker-entrypoint-initdb.d/01_usuario.sql
-     # - ./monitoreo-mysql-8/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./monitoreo/mysql8/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
 
-  # Esto por que consume mucho 
-  #oracle19c:
-  #  image: doctorkirk/oracle-19c
-  #  container_name: sgir_oracle19c
-  #  restart: always
-  #  environment:
-  #    - ORACLE_SID=ORCLCDB
-  #    - ORACLE_PWD=sgir
-  #    - ORACLE_CHARACTERSET=AL32UTF8
-  #  ports:
-  #    - "1521:1521"
-  #  volumes:
-  #    - oracle_data:/opt/oracle/oradata
-  #    - ./monitoreo-oracle/init.sql:/opt/oracle/scripts/setup/01_init.sql
+  oracle19c:
+    image: doctorkirk/oracle-19c
+    container_name: sgir_oracle19c
+    restart: always
+    environment:
+      - ORACLE_SID=SPARHDB
+      - ORACLE_PWD=sgir
+      - ORACLE_CHARACTERSET=AL32UTF8
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./monitoreo-oracle/init.sql:/opt/oracle/scripts/setup/01_init.sql
 
   mongodb:
     image: mongo:latest
@@ -83,6 +82,10 @@ services:
       - USER_NAME=sgir_user
       - USER_PASSWORD=sgir_pass
       - PASSWORD_ACCESS=true
+    #volumes:
+     # - ./monitoreo/ssh_server/init.sh:/config/init.sh:ro
+    #command: >
+      #bash /config/init.sh
     ports:
       - "2222:2222"
   fedora_node:
@@ -107,4 +110,4 @@ services:
 
 volumes:
   postgres_data:
-  #oracle_data:
+  oracle_data:
