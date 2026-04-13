@@ -22,35 +22,18 @@ INSERT INTO DBMS (nombre_dbms, version, descripcion) VALUES
 ('Oracle Database', '19c', 'Enterprise Data'),
 ('MongoDB', '8.0', 'NoSQL Metrics');
 
--- 2. USUARIOS (Password: sgir hashed with bcrypt)
-INSERT INTO Usuario (nombres, apellidos, email, password_hash, id_rol, id_estado_usuario) VALUES 
-('Admin', 'SRE', 'admin@sgir.io', '$2b$12$K7vU7U2.yO7Y2Fm7P3P3OeG5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z', 1, 1);
+-- TABLAS COMPLETADAS SEGÚN REQUERIMIENTO
+INSERT INTO Tipo_Respaldo (nombre_tipo) VALUES 
+('Completo'), ('Incremental'), ('Diferencial');
 
--- 3. SERVIDORES (Contenedores Reales detectados por docker ps)
--- Nota: Usamos IPs de host (localhost/127.0.0.1) o nombres de red docker si corresponde
-INSERT INTO Servidor (nombre_servidor, direccion_ip, es_legacy, id_nivel_criticidad, id_estado_servidor, descripcion) VALUES 
-('SGIR-DB-MASTER', '172.17.0.1', FALSE, 4, 1, 'Base de datos principal del sistema (Postgres)'),
-('MYSQL-LEGACY-01', '172.17.0.1', TRUE, 3, 1, 'Servidor MySQL 5.7 Legacy'),
-('MYSQL-MODERN-01', '172.17.0.1', FALSE, 3, 1, 'Servidor MySQL 8.0 Modern'),
-('MONGODB-METRICS', '172.17.0.1', FALSE, 2, 1, 'Almacén de métricas NoSQL');
+INSERT INTO Tipo_Almacenamiento (nombre_tipo) VALUES 
+('Disco Local'), ('S3 Cloud'), ('NFS/NAS'), ('SAN/Fibre Channel');
 
--- 4. CREDENCIALES (Cifradas con AES SGIR para que dynamic_db las use)
--- Password real: 'sgir' (cifrado con Fernet de security.py)
-INSERT INTO Credencial_Acceso (usuario, password_hash, id_tipo_acceso, id_estado_credencial, id_servidor) VALUES 
-('sgir', 'gAAAAABmEDm_o9e5v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v=', 2, 1, 1), -- Postgres
-('sgir', 'gAAAAABmEDm_o9e5v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v=', 2, 1, 2), -- MySQL 5
-('sgir', 'gAAAAABmEDm_o9e5v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v=', 2, 1, 3), -- MySQL 8
-('sgir', 'gAAAAABmEDm_o9e5v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v9v=', 2, 1, 4); -- MongoDB
+INSERT INTO Nivel_Alerta (nombre_nivel) VALUES 
+('Informativo'), ('Advertencia'), ('Crítico'), ('Fatal');
 
--- 5. INSTANCIAS DBMS (Mapeo de puertos docker)
-INSERT INTO Instancia_DBMS (nombre_instancia, puerto, id_servidor, id_dbms, id_estado_instancia) VALUES 
-('sgir_db', 5432, 1, 1, 1),   -- Postgres Master
-('mysql5_db', 3305, 2, 2, 1), -- MySQL 5 (Host Port 3305)
-('mysql8_db', 3308, 3, 3, 1), -- MySQL 8 (Host Port 3308)
-('admin', 27017, 4, 5, 1);    -- MongoDB Admin
+INSERT INTO Tipo_Metrica (nombre_tipo, unidad_medida) VALUES 
+('Uso de CPU', '%'), ('Uso de Memoria', '%'), ('Espacio en Disco', 'GB'), ('Latencia de Red', 'ms'), ('IOPS', 'ops/s');
 
--- 6. BASES DE DATOS ESPECÍFICAS
-INSERT INTO Base_de_Datos (nombre_base, tamano_mb, id_instancia, id_estado_bd) VALUES 
-('sgir_db', 10.5, 1, 1),
-('mysql5_db', 5.0, 2, 1),
-('mysql8_db', 5.0, 3, 1);
+INSERT INTO Tipo_Evento_Auditoria (nombre_evento) VALUES 
+('Inicio de Sesión'), ('Cierre de Sesión'), ('Falla de Autenticación'), ('Creación de Usuario'), ('Modificación de Configuración'), ('Ejecución de Respaldo'), ('Restauración de Datos');
