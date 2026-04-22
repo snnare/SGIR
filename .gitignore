@@ -1,1 +1,7 @@
 ./bd/*.csv
+
+# Docker volumes
+**/postgres_data/
+**/oracle_data/
+**/data/
+**/volumes/
