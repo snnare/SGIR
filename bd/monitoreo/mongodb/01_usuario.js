@@ -2,8 +2,8 @@
 db = db.getSiblingDB('admin');
 
 db.createUser({
-  user: "monitor_user",
-  pwd: "tu_password_seguro_mongo",
+  user: "sgir_monitoreo",
+  pwd: "123Nokia$",
   roles: [
     { role: "clusterMonitor", db: "admin" },
     { role: "readAnyDatabase", db: "admin" } // Opcional: si necesitas monitorear tamaños de colecciones

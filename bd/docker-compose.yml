@@ -44,19 +44,19 @@ services:
       - ./monitoreo/mysql8/01_usuario_mysql8.sql:/docker-entrypoint-initdb.d/01_usuario.sql
       - ./monitoreo/mysql8/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
 
-#  oracle19c:
-#    image: doctorkirk/oracle-19c
-#    container_name: sgir_oracle19c
-#    restart: always
-#    environment:
-#      - ORACLE_SID=SPARHDB
-#      - ORACLE_PWD=sgir
-#      - ORACLE_CHARACTERSET=AL32UTF8
-#    ports:
-#      - "1521:1521"
-#    volumes:
-#      - oracle_data:/opt/oracle/oradata
-#      - ./monitoreo-oracle/init.sql:/opt/oracle/scripts/setup/01_init.sql
+  oracle19c:
+    image: doctorkirk/oracle-19c
+    container_name: sgir_oracle19c
+    restart: always
+    environment:
+      - ORACLE_SID=SPARHDB
+      - ORACLE_PWD=sgir
+      - ORACLE_CHARACTERSET=AL32UTF8
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./monitoreo-oracle/init.sql:/opt/oracle/scripts/setup/01_init.sql
 
   mongodb:
     image: mongo:latest
