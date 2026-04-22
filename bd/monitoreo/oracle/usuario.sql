@@ -1,29 +1,17 @@
+-- Conectar al PDB
+ALTER SESSION SET CONTAINER = XEPDB1;
+
 -- Crear usuario
-CREATE USER sgir_monitoreo IDENTIFIED BY "123Nokia$"
-DEFAULT TABLESPACE users
-TEMPORARY TABLESPACE temp
-QUOTA UNLIMITED ON users;
+CREATE USER sgir_monitoreo IDENTIFIED BY "12312300";
 
--- Permitir conexión
+-- Permisos
 GRANT CREATE SESSION TO sgir_monitoreo;
-
--- Acceso a metadata (similar a information_schema)
 GRANT SELECT_CATALOG_ROLE TO sgir_monitoreo;
-
--- Acceso amplio a diccionario (útil para monitoreo)
-GRANT SELECT ANY DICTIONARY TO sgir_monitoreo;
-
--- Vistas dinámicas clave (rendimiento / estado)
-GRANT SELECT ON V_$SESSION TO sgir_monitoreo;
-GRANT SELECT ON V_$DATABASE TO sgir_monitoreo;
-GRANT SELECT ON V_$INSTANCE TO sgir_monitoreo;
-GRANT SELECT ON V_$SYSSTAT TO sgir_monitoreo;
-GRANT SELECT ON V_$PROCESS TO sgir_monitoreo;
-
--- (Opcional) Acceso a objetos del esquema SPARHDB
-BEGIN
-  FOR t IN (SELECT table_name FROM all_tables WHERE owner = 'SPARHDB') LOOP
-    EXECUTE IMMEDIATE 'GRANT SELECT ON SPARHDB.' || t.table_name || ' TO sgir_monitoreo';
-  END LOOP;
-END;
-/
+GRANT SELECT ON v_$session TO sgir_monitoreo;
+GRANT SELECT ON v_$sql TO sgir_monitoreo;
+GRANT SELECT ON v_$process TO sgir_monitoreo;
+GRANT SELECT ON v_$lock TO sgir_monitoreo;
+GRANT SELECT ON v_$instance TO sgir_monitoreo;
+GRANT SELECT ON dba_segments TO sgir_monitoreo;
+GRANT SELECT ON dba_tablespaces TO sgir_monitoreo;
+GRANT SELECT ON dba_free_space TO sgir_monitoreo;
