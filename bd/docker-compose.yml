@@ -80,8 +80,46 @@ services:
       - PASSWORD_ACCESS=true
     ports:
       - "2222:2222"
+
+  ubuntu_stable:
+    image: ubuntu:22.04
+    container_name: sgir_ubuntu_stable
+    restart: always
+    environment:
+      - USER_NAME=sgir_user
+      - USER_PASSWORD=sgir_pass
+    ports:
+      - "2223:22"
+    volumes:
+      - ./monitoreo/ubuntu_stable/init.sh:/init.sh
+    command: /bin/bash /init.sh
+
+  fedora_latest:
+    image: fedora:latest
+    container_name: sgir_fedora_latest
+    restart: always
+    environment:
+      - USER_NAME=sgir_user
+      - USER_PASSWORD=sgir_pass
+    ports:
+      - "2224:22"
+    volumes:
+      - ./monitoreo/fedora_latest/init.sh:/init.sh
+    command: /bin/bash /init.sh
+
+  ubuntu_legacy:
+    image: ubuntu:14.04
+    container_name: sgir_ubuntu_legacy
+    restart: always
+    environment:
+      - USER_NAME=sgir_user
+      - USER_PASSWORD=sgir_pass
+    ports:
+      - "2225:22"
+    volumes:
+      - ./monitoreo/ubuntu_legacy/init.sh:/init.sh
+    command: /bin/bash /init.sh
   
 volumes:
   postgres_data:
   oracle_data:
-
