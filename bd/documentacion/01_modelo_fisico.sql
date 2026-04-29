@@ -109,7 +109,7 @@ CREATE TABLE Ruta_Respaldo (
     id_estado_ruta INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
-CREATE TABLE Política_de_Respaldo (
+CREATE TABLE Politica_de_Respaldo (
     id_politica INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre_politica VARCHAR(100) NOT NULL,
     descripcion TEXT,
@@ -157,7 +157,7 @@ CREATE TABLE Monitoreo (
 
 CREATE TABLE Asignacion_Politica_BD (
     id_base_datos INT NOT NULL REFERENCES Base_de_Datos(id_base_datos) ON DELETE CASCADE,
-    id_politica INT NOT NULL REFERENCES Política_de_Respaldo(id_politica) ON DELETE CASCADE,
+    id_politica INT NOT NULL REFERENCES Politica_de_Respaldo(id_politica) ON DELETE CASCADE,
     PRIMARY KEY (id_base_datos, id_politica) -- Llave primaria compuesta
 );
 
@@ -168,13 +168,13 @@ CREATE TABLE Respaldo (
     tamano_mb NUMERIC(12, 2),
     hash_integridad VARCHAR(255),
     id_base_datos INT NOT NULL REFERENCES Base_de_Datos(id_base_datos),
-    id_politica INT NOT NULL REFERENCES Política_de_Respaldo(id_politica),
+    id_politica INT NOT NULL REFERENCES Politica_de_Respaldo(id_politica),
     id_credencial INT NOT NULL REFERENCES Credencial_Acceso(id_credencial),
     id_ruta_respaldo INT NOT NULL REFERENCES Ruta_Respaldo(id_ruta),
     id_estado_ejecucion INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
-CREATE TABLE Métrica (
+CREATE TABLE Metrica (
     id_metrica BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     valor NUMERIC(10, 2) NOT NULL,
     fecha_registro TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
