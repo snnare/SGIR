@@ -14,6 +14,21 @@ services:
       - ./documentacion/01_modelo_fisico.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./documentacion/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
       - ./documentacion/03_init.sql:/docker-entrypoint-initdb.d/03_init.sql 
+  backend:
+    image: sgir-backend:latest
+    container_name: sgir_backend
+    restart: always
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=sgir
+      - POSTGRES_PASSWORD=sgir
+      - POSTGRES_DB=sgir_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  
 
   mysql5:
     image: mysql:5.7
