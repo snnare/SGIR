@@ -87,6 +87,14 @@ CREATE TABLE Servidor (
     id_estado_servidor INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
+CREATE TABLE Servidor_Particion (
+    id_particion INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_servidor INT NOT NULL REFERENCES Servidor(id_servidor) ON DELETE CASCADE,
+    path TEXT NOT NULL,
+    etiqueta VARCHAR(100) NOT NULL,
+    fecha_registro TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 -- ------------------------------------------------------------------------------
 -- 3. TABLAS PRINCIPALES (NIVEL 2)
 -- ------------------------------------------------------------------------------
