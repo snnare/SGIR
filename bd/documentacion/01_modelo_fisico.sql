@@ -97,7 +97,7 @@ CREATE TABLE Servidor_Particion (
 
 -- ------------------------------------------------------------------------------
 -- 3. TABLAS PRINCIPALES (NIVEL 2)
--- ------------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------ 
 
 CREATE TABLE Credencial_Acceso (
     id_credencial INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
