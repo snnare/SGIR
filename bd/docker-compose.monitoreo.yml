@@ -1,0 +1,141 @@
+services:
+  mysql5:
+    image: mysql:5.7
+    container_name: sgir_mysql5
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=sgir
+      - MYSQL_DATABASE=sgir_db_5
+      - MYSQL_USER=sgir
+      - MYSQL_PASSWORD=sgir
+    ports:
+      - "3305:3306"
+    volumes:
+      - ./monitoreo/mysql5/01_usuario_mysql5.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./monitoreo/mysql5/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    networks:
+      monitoreo_net:
+        ipv4_address: 172.20.0.5
+
+  mysql8:
+    image: mysql:8.0
+    container_name: sgir_mysql8
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=sgir
+      - MYSQL_DATABASE=sgir_db_8
+      - MYSQL_USER=sgir
+      - MYSQL_PASSWORD=sgir
+    ports:
+      - "3308:3306"
+    volumes:
+      - ./monitoreo/mysql8/01_usuario_mysql8.sql:/docker-entrypoint-initdb.d/01_usuario.sql
+      - ./monitoreo/mysql8/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    networks:
+      monitoreo_net:
+        ipv4_address: 172.20.0.8
+
+  oracle21c:
+    image: container-registry.oracle.com/database/express:21.3.0-xe
+    container_name: sgir_oracle21c
+    restart: always
+    environment:
+      - ORACLE_PWD=123Nokia$
+      - ORACLE_CHARACTERSET=AL32UTF8
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./monitoreo/oracle/usuario.sql:/opt/oracle/scripts/setup/01_init.sql
+    networks:
+      monitoreo_net:
+        ipv4_address: 172.20.0.21
+
+  mongodb:
+    image: mongo:latest
+    container_name: sgir_mongodb
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=sgir
+      - MONGO_INITDB_ROOT_PASSWORD=sgir
+      - MONGO_INITDB_DATABASE=admin
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./monitoreo/mongodb/01_usuario.js:/docker-entrypoint-initdb.d/01_usuario.js:ro
+    networks:
+      monitoreo_net:
+        ipv4_address: 172.20.0.27
+   
+  ssh_server:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: sgir_ssh_server
+    restart: always
+    environment:
+      - USER_NAME=sgir_user
+      - USER_PASSWORD=sgir_pass
+      - PASSWORD_ACCESS=true
+    ports:
+      - "2222:2222"
+    networks:
+      monitoreo_net:
+        ipv4_address: 172.20.0.22
+
+  ubuntu_stable:
+    image: ubuntu:22.04
+    container_name: sgir_ubuntu_stable
+    restart: always
+    environment:
+      - USER_NAME=sgir_user
+      - USER_PASSWORD=sgir_pass
+    ports:
+      - "2223:22"
+    volumes:
+      - ./monitoreo/ubuntu_stable/init.sh:/init.sh
+    command: /bin/bash /init.sh
+    networks:
+      monitoreo_net:
+        ipv4_address: 172.20.0.30
+
+  fedora_latest:
+    image: fedora:latest
+    container_name: sgir_fedora_latest
+    restart: always
+    environment:
+      - USER_NAME=sgir_user
+      - USER_PASSWORD=sgir_pass
+    ports:
+      - "2224:22"
+    volumes:
+      - ./monitoreo/fedora_latest/init.sh:/init.sh
+    command: /bin/bash /init.sh
+    networks:
+      monitoreo_net:
+        ipv4_address: 172.20.0.31
+
+  ubuntu_legacy:
+    image: ubuntu:14.04
+    container_name: sgir_ubuntu_legacy
+    restart: always
+    environment:
+      - USER_NAME=sgir_user
+      - USER_PASSWORD=sgir_pass
+    ports:
+      - "2225:22"
+    volumes:
+      - ./monitoreo/ubuntu_legacy/init.sh:/init.sh
+    command: /bin/bash /init.sh
+    networks:
+      monitoreo_net:
+        ipv4_address: 172.20.0.32
+
+networks:
+  monitoreo_net:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  oracle_data:

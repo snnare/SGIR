@@ -7,14 +7,14 @@
 -- Se asume: id_estado=1 (Activo), Criticidad: 4 (Crítico), 3 (Alto), 2 (Medio), 1 (Bajo)
 INSERT INTO Servidor (nombre_servidor, direccion_ip, es_legacy, id_nivel_criticidad, id_estado_servidor) VALUES 
 ('Servidor PostgreSQL Core', 'sgir_postgres', FALSE, 4, 1),
-('Servidor MySQL 5 Legacy', 'sgir_mysql5', TRUE, 3, 1),
-('Servidor MySQL 8 Modern', 'sgir_mysql8', FALSE, 3, 1),
-('Servidor Oracle Enterprise', 'sgir_oracle21c', FALSE, 4, 1),
-('Servidor MongoDB NoSQL', 'sgir_mongodb', FALSE, 2, 1),
-('SSH Gateway Server', 'sgir_ssh_server', FALSE, 2, 1),
-('Nodo Ubuntu Stable', 'sgir_ubuntu_stable', FALSE, 2, 1),
-('Nodo Fedora Latest', 'sgir_fedora_latest', FALSE, 2, 1),
-('Nodo Ubuntu Legacy (Old)', 'sgir_ubuntu_legacy', TRUE, 1, 1);
+('Servidor MySQL 5 Legacy', '172.20.0.5', TRUE, 3, 1),
+('Servidor MySQL 8 Modern', '172.20.0.8', FALSE, 3, 1),
+('Servidor Oracle Enterprise', '172.20.0.21', FALSE, 4, 1),
+('Servidor MongoDB NoSQL', '172.20.0.27', FALSE, 2, 1),
+('SSH Gateway Server', '172.20.0.22', FALSE, 2, 1),
+('Nodo Ubuntu Stable', '172.20.0.30', FALSE, 2, 1),
+('Nodo Fedora Latest', '172.20.0.31', FALSE, 2, 1),
+('Nodo Ubuntu Legacy (Old)', '172.20.0.32', TRUE, 1, 1);
 
 -- 2. REGISTRO DE INSTANCIAS DBMS
 -- IDs de DBMS: 1:Postgres, 2:MySQL 5.7, 3:MySQL 8.0, 4:Oracle, 5:MongoDB
