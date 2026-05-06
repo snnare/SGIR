@@ -3,7 +3,7 @@
 echo "Configurando Fedora Latest para monitoreo..."
 
 # Instalar herramientas (cronie para Fedora)
-dnf install -y openssh-server procps-ng iproute cronie
+dnf install -y openssh-server procps-ng iproute cronie hostname
 
 # Generar llaves de host si no existen
 ssh-keygen -A

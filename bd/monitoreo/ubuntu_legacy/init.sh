@@ -5,8 +5,6 @@ echo "Configurando Ubuntu Legacy (14.04 Trusty) para monitoreo..."
 # REPARAR REPOS (Vital para distros legacy)
 cat <<EOF > /etc/apt/sources.list
 deb http://old-releases.ubuntu.com/ubuntu trusty main restricted universe multiverse
-deb http://old-releases.ubuntu.com/ubuntu trusty-updates main restricted universe multiverse
-deb http://old-releases.ubuntu.com/ubuntu trusty-security main restricted universe multiverse
 EOF
 
 # Actualizar e instalar herramientas

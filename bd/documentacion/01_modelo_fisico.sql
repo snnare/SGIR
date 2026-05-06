@@ -113,6 +113,7 @@ CREATE TABLE Ruta_Respaldo (
     id_ruta INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     descripcion_ruta VARCHAR(150) NOT NULL,
     path TEXT NOT NULL,
+    id_servidor INT NOT NULL REFERENCES Servidor(id_servidor) ON DELETE CASCADE,
     id_tipo_almacenamiento INT NOT NULL REFERENCES Tipo_Almacenamiento(id_tipo_almacenamiento),
     id_estado_ruta INT NOT NULL REFERENCES Estado_General(id_estado)
 );
@@ -155,7 +156,6 @@ CREATE TABLE Monitoreo (
     fecha_inicio TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     fecha_fin TIMESTAMPTZ,
     id_servidor INT NOT NULL REFERENCES Servidor(id_servidor) ON DELETE CASCADE,
-    id_credencial INT NOT NULL REFERENCES Credencial_Acceso(id_credencial),
     id_estado_monitoreo INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 

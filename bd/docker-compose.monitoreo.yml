@@ -14,8 +14,7 @@ services:
       - ./monitoreo/mysql5/01_usuario_mysql5.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./monitoreo/mysql5/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
     networks:
-      monitoreo_net:
-        ipv4_address: 172.20.0.5
+      - monitoreo_net
 
   mysql8:
     image: mysql:8.0
@@ -32,8 +31,7 @@ services:
       - ./monitoreo/mysql8/01_usuario_mysql8.sql:/docker-entrypoint-initdb.d/01_usuario.sql
       - ./monitoreo/mysql8/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
     networks:
-      monitoreo_net:
-        ipv4_address: 172.20.0.8
+      - monitoreo_net
 
   oracle21c:
     image: container-registry.oracle.com/database/express:21.3.0-xe
@@ -48,8 +46,7 @@ services:
       - oracle_data:/opt/oracle/oradata
       - ./monitoreo/oracle/usuario.sql:/opt/oracle/scripts/setup/01_init.sql
     networks:
-      monitoreo_net:
-        ipv4_address: 172.20.0.21
+      - monitoreo_net
 
   mongodb:
     image: mongo:latest
@@ -64,9 +61,8 @@ services:
     volumes:
       - ./monitoreo/mongodb/01_usuario.js:/docker-entrypoint-initdb.d/01_usuario.js:ro
     networks:
-      monitoreo_net:
-        ipv4_address: 172.20.0.27
-   
+      - monitoreo_net
+
   ssh_server:
     image: lscr.io/linuxserver/openssh-server:latest
     container_name: sgir_ssh_server
@@ -78,8 +74,7 @@ services:
     ports:
       - "2222:2222"
     networks:
-      monitoreo_net:
-        ipv4_address: 172.20.0.22
+      - monitoreo_net
 
   ubuntu_stable:
     image: ubuntu:22.04
@@ -94,8 +89,7 @@ services:
       - ./monitoreo/ubuntu_stable/init.sh:/init.sh
     command: /bin/bash /init.sh
     networks:
-      monitoreo_net:
-        ipv4_address: 172.20.0.30
+      - monitoreo_net
 
   fedora_latest:
     image: fedora:latest
@@ -110,32 +104,10 @@ services:
       - ./monitoreo/fedora_latest/init.sh:/init.sh
     command: /bin/bash /init.sh
     networks:
-      monitoreo_net:
-        ipv4_address: 172.20.0.31
-
-  ubuntu_legacy:
-    image: ubuntu:14.04
-    container_name: sgir_ubuntu_legacy
-    restart: always
-    environment:
-      - USER_NAME=sgir_user
-      - USER_PASSWORD=sgir_pass
-    ports:
-      - "2225:22"
-    volumes:
-      - ./monitoreo/ubuntu_legacy/init.sh:/init.sh
-    command: /bin/bash /init.sh
-    networks:
-      monitoreo_net:
-        ipv4_address: 172.20.0.32
+      - monitoreo_net
 
 networks:
   monitoreo_net:
     driver: bridge
-    internal: true
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-
 volumes:
   oracle_data:

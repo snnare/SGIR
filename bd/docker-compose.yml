@@ -13,7 +13,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./documentacion/01_modelo_fisico.sql:/docker-entrypoint-initdb.d/01_init.sql
       - ./documentacion/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
-      - ./documentacion/03_init.sql:/docker-entrypoint-initdb.d/03_init.sql 
+      - ./documentacion/03_init.sql:/docker-entrypoint-initdb.d/03_init.sql
+    networks:
+      - monitoreo_net
   backend:
     image: sgir-backend:latest
     container_name: sgir_backend
@@ -27,6 +29,12 @@ services:
       - "8000:8000"
     depends_on:
       - db
+    networks:
+      - monitoreo_net
 
 volumes:
   postgres_data:
+
+networks:
+  monitoreo_net:
+    driver: bridge
