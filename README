@@ -88,3 +88,17 @@ Se han configurado usuarios siguiendo el **Principio de Menor Privilegio** para 
 
 ---
 **Nota de Seguridad**: Todas las contraseñas de infraestructura se almacenan cifradas en la base de datos core (AES-256) y las acciones operativas se registran con hash SHA256 en la **Bitácora Maestra**.
+
+
+### SSH (Servidores de Infraestructura)
+*   **SSH Genérico (2222)**: `sgir_user` / `sgir_pass`.
+*   **Fedora Node (2223)**: `sgir` / `sgir` (Incluye `top`, `free`, `df`).
+
+---
+
+## 5. Arquitectura y Pilares de la API
+
+1.  **/monitoring**: Recolección asíncrona de métricas de hardware y RDBMS.
+2.  **/backup**: Gestión del ciclo de vida del dato (Dump -> SFTP -> Cloud -> Retention Policy).
+3.  **/assets**: Búsqueda global de recursos (Encontrar "donde está la tabla X en toda la red").
+4.  **/uploadData**: Carga masiva de inventario mediante CSV con validación de tipos.
