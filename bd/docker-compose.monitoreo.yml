@@ -99,7 +99,7 @@ services:
       - USER_NAME=sgir_user
       - USER_PASSWORD=sgir_pass
     ports:
-      - "2224:22"
+      - "22:22"
     volumes:
       - ./monitoreo/fedora_latest/init.sh:/init.sh
     command: /bin/bash /init.sh

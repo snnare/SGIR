@@ -83,6 +83,8 @@ CREATE TABLE Servidor (
     es_legacy BOOLEAN DEFAULT FALSE,
     fecha_registro TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     descripcion TEXT,
+    monitoreo_host BOOLEAN DEFAULT FALSE,
+    monitoreo_db BOOLEAN DEFAULT FALSE,
     id_nivel_criticidad INT NOT NULL REFERENCES Nivel_Criticidad(id_nivel_criticidad),
     id_estado_servidor INT NOT NULL REFERENCES Estado_General(id_estado)
 );
