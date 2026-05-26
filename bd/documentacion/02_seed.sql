@@ -13,13 +13,13 @@ INSERT INTO Nivel_Criticidad (nombre_nivel, descripcion) VALUES
 ('Bajo', 'Pruebas'), ('Medio', 'Interno'), ('Alto', 'Institucional'), ('Crítico', 'Misión Crítica');
 
 INSERT INTO Tipo_Acceso (nombre_tipo) VALUES 
-('SSH'), ('DB Native'), ('SFTP'), ('API');
+('SSH'), ('DB Native'), ('SFTP');
 
 INSERT INTO DBMS (nombre_dbms, version, descripcion) VALUES 
 ('PostgreSQL', '16.0', 'DB de la App'),
 ('MySQL', '5.7', 'Legacy Infrastructure'),
 ('MySQL', '8.0', 'Modern Infrastructure'),
-('Oracle Database', '19c', 'Enterprise Data'),
+('Oracle Database', 'Any', 'Enterprise Data'),
 ('MongoDB', '8.0', 'NoSQL Metrics');
 
 -- TABLAS COMPLETADAS SEGÚN REQUERIMIENTO
@@ -27,7 +27,7 @@ INSERT INTO Tipo_Respaldo (nombre_tipo) VALUES
 ('Completo'), ('Incremental'), ('Diferencial');
 
 INSERT INTO Tipo_Almacenamiento (nombre_tipo) VALUES 
-('Disco Local'), ('S3 Cloud'), ('NFS/NAS'), ('SAN/Fibre Channel');
+('Disco Local'), ('NFS/NAS');
 
 INSERT INTO Nivel_Alerta (nombre_nivel) VALUES 
 ('Informativo'), ('Advertencia'), ('Crítico'), ('Fatal');
