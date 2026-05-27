@@ -126,10 +126,10 @@ CREATE TABLE Politica_de_Respaldo (
     descripcion TEXT,
     expression_cron VARCHAR(100),
     hora_ejecuccion TIME,
-    dias_semanas VARCHAR(50),
+    dias_semana VARCHAR(50),
     frecuencia_horas INT NOT NULL,
     retencion_dias INT NOT NULL,
-    script_path VARCHAR(512)
+    script_path VARCHAR(512),
     id_tipo_respaldo INT NOT NULL REFERENCES Tipo_Respaldo(id_tipo_respaldo),
     id_estado_politica INT NOT NULL REFERENCES Estado_General(id_estado)
 );
@@ -177,16 +177,22 @@ CREATE TABLE Asignacion_Politica_BD (
 );
 
 CREATE TABLE Respaldo (
-    id_respaldo BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    fecha_inicio TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    fecha_fin TIMESTAMPTZ,
-    tamano_mb NUMERIC(12, 2),
-    hash_integridad VARCHAR(255),
-    id_base_datos INT NOT NULL REFERENCES Base_de_Datos(id_base_datos),
-    id_politica INT NOT NULL REFERENCES Politica_de_Respaldo(id_politica),
-    id_credencial INT NOT NULL REFERENCES Credencial_Acceso(id_credencial),
-    id_ruta_respaldo INT NOT NULL REFERENCES Ruta_Respaldo(id_ruta),
-    id_estado_ejecucion INT NOT NULL REFERENCES Estado_General(id_estado)
+  id_respaldo BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  fecha_inicio TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  fecha_fin TIMESTAMPTZ,
+  fecha_descubrimiento TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  nombre_archivo VARCHAR(255),
+  tamano_mb NUMERIC(12, 2),
+  hash_integridad VARCHAR(255),
+  path_fisico_origen VARCHAR(512),
+  ubicacion_actual VARCHAR(50) DEFAULT 'Origen',
+  ip_almacenado_actual VARCHAR(50),
+  path_fisico_actual VARCHAR(512),
+  id_base_datos INT NOT NULL REFERENCES Base_de_Datos(id_base_datos),
+  id_politica INT NOT NULL REFERENCES Politica_de_Respaldo(id_politica),
+  id_credencial INT REFERENCES Credencial_Acceso(id_credencial),
+  id_estado_ejecucion INT NOT NULL REFERENCES Estado_General(id_estado),
+  metadata_tecnica JSON DEFAULT '{}'::jsonb
 );
 
 CREATE TABLE Metrica (
