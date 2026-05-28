@@ -19,7 +19,7 @@ INSERT INTO DBMS (nombre_dbms, version, descripcion) VALUES
 ('PostgreSQL', '16.0', 'DB de la App'),
 ('MySQL', '5.7', 'Legacy Infrastructure'),
 ('MySQL', '8.0', 'Modern Infrastructure'),
-('Oracle Database', 'Any', 'Enterprise Data'),
+('Oracle Database', '[10g,19c]', 'Enterprise Data'),
 ('MongoDB', '8.0', 'NoSQL Metrics');
 
 -- TABLAS COMPLETADAS SEGÚN REQUERIMIENTO
@@ -27,7 +27,7 @@ INSERT INTO Tipo_Respaldo (nombre_tipo) VALUES
 ('Completo'), ('Incremental'), ('Diferencial');
 
 INSERT INTO Tipo_Almacenamiento (nombre_tipo) VALUES 
-('Disco Local'), ('NFS/NAS');
+('Disco Local'), ('Sharepoint');
 
 INSERT INTO Nivel_Alerta (nombre_nivel) VALUES 
 ('Informativo'), ('Advertencia'), ('Crítico'), ('Fatal');
