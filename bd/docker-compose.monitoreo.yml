@@ -48,6 +48,20 @@ services:
     networks:
       - monitoreo_net
 
+  oracle12c:
+    image: konnecteam/docker-oracle-12c:sequelize
+    container_name: sgir_oracle12c
+    restart: always
+    environment:
+      - ORACLE_PWD=123Nokia$
+    ports:
+      - "1522:1521"
+    volumes:
+      - oracle12c_data:/u01/app/oracle
+      - ./monitoreo/oracle/usuario.sql:/docker-entrypoint-initdb.d/01_init.sql
+    networks:
+      - monitoreo_net
+
   mongodb:
     image: mongo:latest
     container_name: sgir_mongodb
@@ -109,5 +123,7 @@ services:
 networks:
   monitoreo_net:
     driver: bridge
+
 volumes:
   oracle_data:
+  oracle12c_data:
