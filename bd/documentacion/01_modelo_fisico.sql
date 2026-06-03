@@ -120,12 +120,13 @@ CREATE TABLE Ruta_Respaldo (
     id_estado_ruta INT NOT NULL REFERENCES Estado_General(id_estado)
 );
 
+--- atributo hora_ejecuccion -> hora_ejecucion
 CREATE TABLE Politica_de_Respaldo (
     id_politica INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre_politica VARCHAR(100) NOT NULL,
     descripcion TEXT,
     expression_cron VARCHAR(100),
-    hora_ejecuccion TIME,
+    hora_ejecucion TIME,
     dias_semana VARCHAR(50),
     frecuencia_horas INT NOT NULL,
     retencion_dias INT NOT NULL,
