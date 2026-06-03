@@ -88,8 +88,8 @@ CREATE TABLE Servidor (
     id_nivel_criticidad INT NOT NULL REFERENCES Nivel_Criticidad(id_nivel_criticidad),
     id_estado_servidor INT NOT NULL REFERENCES Estado_General(id_estado)
 );
-
-CREATE TABLE Servidor_Particion (
+--- Se cambio de Servidor_Particion a Particion
+CREATE TABLE Particion (
     id_particion INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_servidor INT NOT NULL REFERENCES Servidor(id_servidor) ON DELETE CASCADE,
     path TEXT NOT NULL,
